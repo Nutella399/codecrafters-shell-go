@@ -29,10 +29,10 @@ func isBuiltin(command string) bool {
 	}
 }
 
-func isInPath(command string) bool {
+func isInPath(command string) (bool, string) {
 	value, exists := os.LookupEnv("PATH")
 	if !exists {
-		return false
+		return false, ""
 	}
 
 	pathArr := strings.Split(value, ":")
@@ -40,12 +40,11 @@ func isInPath(command string) bool {
 		filename := path + "/" + command
 		_, err := os.Stat(filename)
 		if !errors.Is(err, os.ErrNotExist) {
-			fmt.Println(filename)
-			return true
+			return true, filename
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 func repl(reader *bufio.Reader) {
@@ -64,23 +63,26 @@ func repl(reader *bufio.Reader) {
 	case "echo":
 		fmt.Println(strings.Join(args, " "))
 	case "type":
+		existsInPath, filename := isInPath(args[0])
 		if isBuiltin(args[0]) {
 			fmt.Println(args[0] + " is a shell builtin")
-		} else if isInPath(args[0]) {
-			return
+		} else if existsInPath {
+			fmt.Println(filename)
 		} else {
 			fmt.Println(args[0] + ": not found")
 		}
 	default:
-		if isInPath(command) {
+		existsInPath, _ := isInPath(command)
+		if existsInPath {
 			cmd := exec.Command(command, args[0])
 			stdout, err := cmd.Output()
 			if err != nil {
 				fmt.Println(err.Error())
 				return
 			}
-			fmt.Println(string(stdout))
+			fmt.Print(string(stdout))
+		} else {
+			fmt.Println(text + ": command not found")
 		}
-		fmt.Println(text + ": command not found")
 	}
 }
