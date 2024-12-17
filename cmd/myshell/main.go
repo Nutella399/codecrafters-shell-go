@@ -16,6 +16,11 @@ func main() {
 }
 
 func isBuiltin(command string) bool {
+	value, exists := os.LookupEnv("PATH")
+	if !exists {
+		return false
+	}
+
 	switch command {
 	case
 		"echo",
@@ -23,8 +28,10 @@ func isBuiltin(command string) bool {
 		"type":
 		return true
 	default:
-		return false
+		pathArr := strings.Split(value, ":")
+		fmt.Println(pathArr)
 	}
+	return false
 }
 
 func repl(reader *bufio.Reader) {
