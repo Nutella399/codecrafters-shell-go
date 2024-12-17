@@ -23,10 +23,12 @@ func repl(reader *bufio.Reader) {
 	text = text[:len(text)-1]
 	textArr := strings.Split(text, " ")
 
-	if textArr[0] == "exit" {
+	switch textArr[0] {
+	case "exit":
 		os.Exit(0)
-	} else {
+	case "echo":
+		fmt.Println(strings.Join(textArr[1:], " "))
+	default:
 		fmt.Println(text + ": command not found")
 	}
-
 }
