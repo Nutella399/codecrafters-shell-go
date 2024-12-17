@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -20,6 +21,12 @@ func repl(reader *bufio.Reader) {
 
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
+	textArr := strings.Split(text, " ")
 
-	fmt.Println(text + ": command not found")
+	if textArr[0] == "exit" {
+		os.Exit(0)
+	} else {
+		fmt.Println(text + ": command not found")
+	}
+
 }
