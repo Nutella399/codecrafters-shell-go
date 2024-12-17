@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -71,6 +72,15 @@ func repl(reader *bufio.Reader) {
 			fmt.Println(args[0] + ": not found")
 		}
 	default:
+		if isInPath(command) {
+			cmd := exec.Command(command, args[0])
+			stdout, err := cmd.Output()
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			fmt.Println(string(stdout))
+		}
 		fmt.Println(text + ": command not found")
 	}
 }
