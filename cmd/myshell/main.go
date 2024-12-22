@@ -23,7 +23,8 @@ func isBuiltin(command string) bool {
 		"echo",
 		"exit",
 		"type",
-		"pwd":
+		"pwd",
+		"cd":
 		return true
 	default:
 		return false
