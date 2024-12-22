@@ -84,6 +84,10 @@ func parseCommand(command string) []string {
 			} else {
 				doubleQuoted = true
 			}
+		case '\\':
+			if doubleQuoted {
+				temp.WriteByte(char)
+			}
 		default:
 			temp.WriteByte(char)
 		}
