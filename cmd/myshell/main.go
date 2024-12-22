@@ -22,7 +22,8 @@ func isBuiltin(command string) bool {
 	case
 		"echo",
 		"exit",
-		"type":
+		"type",
+		"pwd":
 		return true
 	default:
 		return false
@@ -70,6 +71,13 @@ func repl(reader *bufio.Reader) {
 			fmt.Println(filename)
 		} else {
 			fmt.Println(args[0] + ": not found")
+		}
+	case "pwd":
+		pwd, err := os.Getwd()
+		if err != nil {
+			fmt.Println("Error printing directory: ", err)
+		} else {
+			fmt.Println(pwd)
 		}
 	default:
 		existsInPath, _ := isInPath(command)
