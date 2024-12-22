@@ -31,10 +31,10 @@ func isBuiltin(command string) bool {
 	}
 }
 
-func isInPath(command string) (bool, string) {
+func isInPath(command string) (string, bool) {
 	value, exists := os.LookupEnv("PATH")
 	if !exists {
-		return false, ""
+		return "", false
 	}
 
 	pathArr := strings.Split(value, ":")
@@ -42,11 +42,46 @@ func isInPath(command string) (bool, string) {
 		filename := path + "/" + command
 		_, err := os.Stat(filename)
 		if !errors.Is(err, os.ErrNotExist) {
-			return true, filename
+			return filename, true
 		}
 	}
 
-	return false, ""
+	return "", false
+}
+
+func parseCommand(command string) []string {
+	var result []string
+	var temp strings.Builder
+	quoted := false
+
+	for i := 0; i < len(command); i++ {
+		char := command[i]
+
+		switch char {
+		case ' ':
+			if quoted {
+				temp.WriteByte(char)
+			} else if temp.Len() > 0 {
+				result = append(result, temp.String())
+				temp.Reset()
+			}
+		case '\'':
+			if quoted {
+				result = append(result, temp.String())
+				temp.Reset()
+				quoted = false
+			} else {
+				quoted = true
+			}
+		default:
+			temp.WriteByte(char)
+		}
+	}
+
+	if temp.Len() > 0 {
+		result = append(result, temp.String())
+	}
+	return result
 }
 
 func repl(reader *bufio.Reader) {
@@ -54,7 +89,7 @@ func repl(reader *bufio.Reader) {
 
 	text, _ := reader.ReadString('\n')
 	text = text[:len(text)-1]
-	textArr := strings.Split(text, " ")
+	textArr := parseCommand(text)
 
 	command := textArr[0]
 	args := textArr[1:]
@@ -65,7 +100,7 @@ func repl(reader *bufio.Reader) {
 	case "echo":
 		fmt.Println(strings.Join(args, " "))
 	case "type":
-		existsInPath, filename := isInPath(args[0])
+		filename, existsInPath := isInPath(args[0])
 		if isBuiltin(args[0]) {
 			fmt.Println(args[0] + " is a shell builtin")
 		} else if existsInPath {
@@ -90,9 +125,9 @@ func repl(reader *bufio.Reader) {
 			fmt.Println("cd: " + args[0] + ": No such file or directory")
 		}
 	default:
-		existsInPath, _ := isInPath(command)
+		_, existsInPath := isInPath(command)
 		if existsInPath {
-			cmd := exec.Command(command, args[0])
+			cmd := exec.Command(command, args...)
 			stdout, err := cmd.Output()
 			if err != nil {
 				fmt.Println(err.Error())
