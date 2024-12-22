@@ -54,14 +54,18 @@ func parseCommand(command string) []string {
 	var temp strings.Builder
 	singleQuoted := false
 	doubleQuoted := false
+	backSlashed := false
 
 	for i := 0; i < len(command); i++ {
 		char := command[i]
 
 		switch char {
 		case ' ':
-			if singleQuoted || doubleQuoted {
+			if singleQuoted || doubleQuoted || backSlashed {
 				temp.WriteByte(char)
+				if backSlashed {
+					backSlashed = false
+				}
 			} else if temp.Len() > 0 {
 				result = append(result, temp.String())
 				temp.Reset()
@@ -87,6 +91,8 @@ func parseCommand(command string) []string {
 		case '\\':
 			if doubleQuoted {
 				temp.WriteByte(char)
+			} else {
+				backSlashed = true
 			}
 		default:
 			temp.WriteByte(char)
