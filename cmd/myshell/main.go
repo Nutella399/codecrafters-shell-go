@@ -74,12 +74,13 @@ func repl(reader *bufio.Reader) {
 			fmt.Println(args[0] + ": not found")
 		}
 	case "pwd":
-		pwd, err := os.Getwd()
-		if err != nil {
-			fmt.Println("Error printing directory: ", err)
-		} else {
-			fmt.Println(pwd)
-		}
+		//pwd, err := os.Getwd()
+		pwd := os.Getenv("PWD")
+		// if err != nil {
+		// 	fmt.Println("Error printing directory: ", err)
+		// } else {
+		fmt.Println(pwd)
+		//}
 	case "cd":
 		path := args[0]
 		if args[0] == "~" {
