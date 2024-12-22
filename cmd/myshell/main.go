@@ -85,11 +85,13 @@ func parseCommand(command string) []string {
 				result = append(result, temp.String())
 				temp.Reset()
 				doubleQuoted = false
+			} else if singleQuoted {
+				temp.WriteByte(char)
 			} else {
 				doubleQuoted = true
 			}
 		case '\\':
-			if doubleQuoted {
+			if doubleQuoted || singleQuoted {
 				temp.WriteByte(char)
 			} else {
 				backSlashed = true
