@@ -79,6 +79,11 @@ func repl(reader *bufio.Reader) {
 		} else {
 			fmt.Println(pwd)
 		}
+	case "cd":
+		err := os.Chdir(args[0])
+		if err != nil {
+			fmt.Println("cd: " + args[0] + ": No such file or directory")
+		}
 	default:
 		existsInPath, _ := isInPath(command)
 		if existsInPath {
