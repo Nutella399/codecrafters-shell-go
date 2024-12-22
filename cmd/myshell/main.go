@@ -52,26 +52,37 @@ func isInPath(command string) (string, bool) {
 func parseCommand(command string) []string {
 	var result []string
 	var temp strings.Builder
-	quoted := false
+	singleQuoted := false
+	doubleQuoted := false
 
 	for i := 0; i < len(command); i++ {
 		char := command[i]
 
 		switch char {
 		case ' ':
-			if quoted {
+			if singleQuoted || doubleQuoted {
 				temp.WriteByte(char)
 			} else if temp.Len() > 0 {
 				result = append(result, temp.String())
 				temp.Reset()
 			}
 		case '\'':
-			if quoted {
+			if singleQuoted {
 				result = append(result, temp.String())
 				temp.Reset()
-				quoted = false
+				singleQuoted = false
+			} else if doubleQuoted {
+				temp.WriteByte(char)
 			} else {
-				quoted = true
+				singleQuoted = true
+			}
+		case '"':
+			if doubleQuoted {
+				result = append(result, temp.String())
+				temp.Reset()
+				doubleQuoted = false
+			} else {
+				doubleQuoted = true
 			}
 		default:
 			temp.WriteByte(char)
