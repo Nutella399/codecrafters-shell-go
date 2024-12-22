@@ -81,7 +81,11 @@ func repl(reader *bufio.Reader) {
 			fmt.Println(pwd)
 		}
 	case "cd":
-		err := os.Chdir(args[0])
+		path := args[0]
+		if args[0] == "~" {
+			path = os.Getenv("HOME")
+		}
+		err := os.Chdir(path)
 		if err != nil {
 			fmt.Println("cd: " + args[0] + ": No such file or directory")
 		}
