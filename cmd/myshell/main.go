@@ -108,8 +108,19 @@ func parseCommand(command string) []string {
 }
 
 func writeToFile(file string, output string) error {
-	err := os.WriteFile(file, []byte(output), 0o777)
-	return err
+	_, err := os.Stat(file)
+	if errors.Is(err, os.ErrNotExist) {
+		writeErr := os.WriteFile(file, []byte(output), 0o777)
+		return writeErr
+	} else {
+		content, readErr := os.ReadFile(file)
+		if readErr != nil {
+			return readErr
+		}
+		newContent := append(content, []byte(output)...)
+		writeErr := os.WriteFile(file, newContent, 0o777)
+		return writeErr
+	}
 }
 
 func repl(reader *bufio.Reader) {
@@ -126,7 +137,7 @@ func repl(reader *bufio.Reader) {
 	var secondaryCommand []string
 
 	for index, arg := range args {
-		if arg == "1>" || arg == ">" || arg == "2>" {
+		if arg == "1>" || arg == "1>>" || arg == ">" || arg == ">>" || arg == "2>" {
 			args = textArr[1 : index+1]
 			secondaryCommand = textArr[index+1:]
 		}
@@ -150,7 +161,6 @@ func repl(reader *bufio.Reader) {
 		pwd, err := os.Getwd()
 		if err != nil {
 			stdError = "Error printing directory: " + err.Error() + "\n"
-			//fmt.Println("Error printing directory: ", err)
 		} else {
 			stdOutput = pwd + "\n"
 		}
@@ -171,10 +181,8 @@ func repl(reader *bufio.Reader) {
 			if err != nil {
 				if exitErr, ok := err.(*exec.ExitError); ok {
 					stdError = string(exitErr.Stderr)
-					//fmt.Print(string(exitErr.Stderr))
 				} else {
 					stdError = "error:" + err.Error()
-					//fmt.Print("error:", err)
 				}
 			}
 			stdOutput = string(stdout)
@@ -188,13 +196,13 @@ func repl(reader *bufio.Reader) {
 		secondArgs := secondaryCommand[1:]
 
 		switch secondCommand {
-		case ">", "1>":
+		case ">", ">>", "1>", "1>>":
 			err := writeToFile(secondArgs[0], stdOutput)
 			if err != nil {
 				fmt.Println("Error:", err)
 			}
 			fmt.Fprint(os.Stderr, stdError)
-		case "2>":
+		case "2>", "2>>":
 			err := writeToFile(secondArgs[0], stdError)
 			if err != nil {
 				fmt.Println("Error:", err)
