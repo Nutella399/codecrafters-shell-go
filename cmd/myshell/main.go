@@ -71,19 +71,15 @@ func parseCommand(command string) []string {
 				temp.Reset()
 			}
 		case '\'':
-			if singleQuoted {
-				result = append(result, temp.String())
-				temp.Reset()
-				singleQuoted = false
-			} else if doubleQuoted {
+			if doubleQuoted {
 				temp.WriteByte(char)
+			} else if singleQuoted {
+				singleQuoted = false
 			} else {
 				singleQuoted = true
 			}
 		case '"':
 			if doubleQuoted {
-				result = append(result, temp.String())
-				temp.Reset()
 				doubleQuoted = false
 			} else if singleQuoted {
 				temp.WriteByte(char)
@@ -91,7 +87,11 @@ func parseCommand(command string) []string {
 				doubleQuoted = true
 			}
 		case '\\':
-			if doubleQuoted || singleQuoted {
+			if !singleQuoted && (i < len(command)-1 && command[i+1] == '\\' || command[i+1] == '$' || command[i+1] == '"') {
+				nextChar := command[i+1]
+				temp.WriteByte(nextChar)
+				i++
+			} else if singleQuoted || doubleQuoted {
 				temp.WriteByte(char)
 			} else {
 				backSlashed = true
@@ -153,7 +153,6 @@ func repl(reader *bufio.Reader) {
 			cmd := exec.Command(command, args...)
 			stdout, err := cmd.Output()
 			if err != nil {
-				fmt.Println(err.Error())
 				return
 			}
 			fmt.Print(string(stdout))
