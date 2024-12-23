@@ -137,7 +137,7 @@ func repl(reader *bufio.Reader) {
 	var secondaryCommand []string
 
 	for index, arg := range args {
-		if arg == "1>" || arg == "1>>" || arg == ">" || arg == ">>" || arg == "2>" {
+		if arg == "1>" || arg == "1>>" || arg == ">" || arg == ">>" || arg == "2>" || arg == "2>>" {
 			args = textArr[1 : index+1]
 			secondaryCommand = textArr[index+1:]
 		}
