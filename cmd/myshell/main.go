@@ -107,36 +107,50 @@ func parseCommand(command string) []string {
 	return result
 }
 
+func writeToFile(file string, output string) error {
+	err := os.WriteFile(file, []byte(output), 0o777)
+	return err
+}
+
 func repl(reader *bufio.Reader) {
 	fmt.Fprint(os.Stdout, "$ ")
 
 	text, _ := reader.ReadString('\n')
-	text = text[:len(text)-1]
+	text = strings.Trim(text, "\r\n")
 	textArr := parseCommand(text)
 
+	stdOutput := ""
 	command := textArr[0]
 	args := textArr[1:]
+	var secondaryCommand []string
+
+	for index, arg := range args {
+		if arg == "1>" || arg == ">" {
+			args = textArr[1 : index+1]
+			secondaryCommand = textArr[index+1:]
+		}
+	}
 
 	switch command {
 	case "exit":
 		os.Exit(0)
 	case "echo":
-		fmt.Println(strings.Join(args, " "))
+		stdOutput = strings.Join(args, " ") + "\n"
 	case "type":
 		filename, existsInPath := isInPath(args[0])
 		if isBuiltin(args[0]) {
-			fmt.Println(args[0] + " is a shell builtin")
+			stdOutput = args[0] + " is a shell builtin\n"
 		} else if existsInPath {
-			fmt.Println(filename)
+			stdOutput = filename + "\n"
 		} else {
-			fmt.Println(args[0] + ": not found")
+			stdOutput = args[0] + ": not found\n"
 		}
 	case "pwd":
 		pwd, err := os.Getwd()
 		if err != nil {
 			fmt.Println("Error printing directory: ", err)
 		} else {
-			fmt.Println(pwd)
+			stdOutput = pwd + "\n"
 		}
 	case "cd":
 		path := args[0]
@@ -145,7 +159,7 @@ func repl(reader *bufio.Reader) {
 		}
 		err := os.Chdir(path)
 		if err != nil {
-			fmt.Println("cd: " + args[0] + ": No such file or directory")
+			stdOutput = "cd: " + args[0] + ": No such file or directory\n"
 		}
 	default:
 		_, existsInPath := isInPath(command)
@@ -153,11 +167,30 @@ func repl(reader *bufio.Reader) {
 			cmd := exec.Command(command, args...)
 			stdout, err := cmd.Output()
 			if err != nil {
-				return
+				if exitErr, ok := err.(*exec.ExitError); ok {
+					fmt.Print(string(exitErr.Stderr))
+				} else {
+					fmt.Print("error:", err)
+				}
 			}
-			fmt.Print(string(stdout))
+			stdOutput = string(stdout)
 		} else {
-			fmt.Println(text + ": command not found")
+			stdOutput = text + ": command not found\n"
 		}
+	}
+
+	if len(secondaryCommand) > 0 {
+		secondCommand := secondaryCommand[0]
+		secondArgs := secondaryCommand[1:]
+
+		switch secondCommand {
+		case ">", "1>":
+			err := writeToFile(secondArgs[0], stdOutput)
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+		}
+	} else {
+		fmt.Fprint(os.Stdout, stdOutput)
 	}
 }
